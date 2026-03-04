@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feed · GitHub Clone</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Mona+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  .activity-item { display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border2); animation:fadeUp 0.3s ease both; }
+  .activity-icon { width:36px; height:36px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:15px; }
+  .activity-content { flex:1; min-width:0; }
+  .activity-user { font-weight:600; color:var(--accent); }
+  .activity-text { font-size:13px; color:var(--text-muted); margin-bottom:4px; }
+  .activity-time { font-size:11px; color:var(--text-dim); }
+  .trending-list { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin:0 12px 16px; overflow:hidden; }
+  .trending-item { display:flex; gap:12px; padding:12px 14px; border-bottom:1px solid var(--border2); cursor:pointer; transition:background 0.15s; }
+  .trending-item:last-child { border-bottom:none; }
+  .trending-item:active { background:var(--surface2); }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a href="feed.html" class="topnav-logo">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.37.6.11.82-.26.82-.57v-2.01c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.01 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.21.69.82.57C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+  </a>
+  <div class="topnav-search">
+    <svg width="14" height="14" fill="none" stroke="#7d8590" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input id="searchInput" placeholder="Search repos..." onkeydown="if(event.key==='Enter')doSearch(this.value)">
+  </div>
+  <div class="topnav-actions">
+    <button class="nav-icon-btn" onclick="window.location.href='notifications.html'" title="Notifications">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="nav-badge" id="notifBadge" style="display:none"></div>
+    </button>
+    <img class="nav-avatar" id="nav-avatar" src="" alt="" onclick="window.location.href='profile.html'" style="display:none">
+    <a class="btn btn-secondary btn-sm" id="login-link" href="login.html">Sign in</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="section-title">Trending Repositories 🔥</div>
+  <div class="trending-list" id="trendingList">
+    <div style="padding:20px;text-align:center"><div class="spinner"></div></div>
+  </div>
+
+  <div class="section-title">Activity Feed</div>
+  <div id="activityFeed">
+    <div style="padding:20px;text-align:center"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottomnav">
+  <a class="nav-item active" href="feed.html">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/></svg>
+    <span class="nav-label">Feed</span>
+  </a>
+  <a class="nav-item" href="explore.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <span class="nav-label">Explore</span>
+  </a>
+  <a class="nav-item" href="new-repo.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="nav-label">New</span>
+  </a>
+  <a class="nav-item" href="notifications.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span class="nav-label">Inbox</span>
+  </a>
+  <a class="nav-item" href="profile.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="nav-label">Profile</span>
+  </a>
+</nav>
+
+<script src="../js/api.js"></script>
+<script>
+function doSearch(q) { window.location.href = 'explore.html?q=' + encodeURIComponent(q); }
+
+async function loadTrending() {
+  try {
+    const data = await ReposAPI.list({ sort: 'stars', limit: 5 });
+    const list = document.getElementById('trendingList');
+
+    if (!data.repos.length) {
+      list.innerHTML = '<div class="empty-state"><p>No repositories yet. <a href="new-repo.html">Create one!</a></p></div>';
+      return;
+    }
+
+    list.innerHTML = data.repos.map((r, i) => `
+      <div class="trending-item" onclick="window.location.href='repo.html?owner=${r.owner_username}&repo=${r.name}'">
+        <div style="font-size:16px;font-weight:700;color:var(--text-dim);font-family:var(--font-mono);width:20px;flex-shrink:0">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;color:var(--accent);font-size:13px;margin-bottom:3px">${r.owner_username}/${r.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${r.description || 'No description'}</div>
+          <div class="repo-card-stats">
+            ${r.language ? `<span class="repo-stat"><span class="lang-dot" style="background:${langColor(r.language)}"></span>${r.language}</span>` : ''}
+            <span class="repo-stat">⭐ ${formatNumber(r.stars_count)}</span>
+            <span style="color:var(--green);font-size:12px">🔥 Trending</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('trendingList').innerHTML = '<div style="padding:14px 16px;color:var(--text-muted);font-size:13px">Could not load trending repos. Is the backend running?</div>';
+  }
+}
+
+async function loadActivity() {
+  const feed = document.getElementById('activityFeed');
+  const user = Auth.getUser();
+
+  if (!user) {
+    feed.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <h3>Sign in to see your feed</h3>
+        <p>Activity from people you follow will appear here.</p>
+        <div style="margin-top:16px"><a class="btn btn-primary" href="login.html">Sign in</a></div>
+      </div>`;
+    return;
+  }
+
+  try {
+    const data = await UsersAPI.activity(user.username);
+    if (!data.activity.length) {
+      feed.innerHTML = `<div class="empty-state"><h3>No activity yet</h3><p>Follow some developers to see their activity here.</p></div>`;
+      return;
+    }
+
+    const icons = { star: '⭐', create_repo: '📦', follow: '👥', push: '📝', fork: '🍴', issue: '🐛', pr: '🔀' };
+    feed.innerHTML = data.activity.map((a, i) => `
+      <div class="activity-item" style="animation-delay:${i * 0.05}s">
+        <div class="activity-icon">${icons[a.type] || '🔔'}</div>
+        <div class="activity-content">
+          <div class="activity-text">
+            <span class="activity-user">${user.username}</span>
+            ${a.type === 'star' ? `starred <a href="repo.html?owner=${a.owner_username}&repo=${a.repo_name}">${a.owner_username}/${a.repo_name}</a>` :
+              a.type === 'create_repo' ? `created repository <a href="repo.html?owner=${a.owner_username}&repo=${a.repo_name}">${a.repo_name}</a>` :
+              a.type}
+          </div>
+          <div class="activity-time">${formatDate(a.created_at)}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    feed.innerHTML = '<div style="padding:14px 16px;color:var(--text-muted)">Could not load activity feed.</div>';
+  }
+}
+
+async function loadNotifCount() {
+  if (!Auth.isLoggedIn()) return;
+  try {
+    const data = await NotificationsAPI.all({ unread_only: true });
+    const badge = document.getElementById('notifBadge');
+    if (data.unread_count > 0) { badge.textContent = data.unread_count; badge.style.display = 'flex'; }
+  } catch {}
+}
+
+loadTrending();
+loadActivity();
+loadNotifCount();
+</script>
+</body>
+</html>

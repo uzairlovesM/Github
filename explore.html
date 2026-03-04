@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore · GitHub Clone</title>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  .filter-bar { display:flex; gap:8px; padding:12px 16px; overflow-x:auto; scrollbar-width:none; }
+  .filter-bar::-webkit-scrollbar { display:none; }
+  .filter-btn { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); transition:all 0.2s; }
+  .filter-btn.active { background:var(--accent); color:#000; border-color:var(--accent); }
+  .repo-list { padding:0 12px; display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .load-more { display:flex; justify-content:center; padding:16px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="feed.html" class="topnav-logo">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.37.6.11.82-.26.82-.57v-2.01c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.01 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.21.69.82.57C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+  </a>
+  <div class="topnav-search" style="max-width:none">
+    <svg width="14" height="14" fill="none" stroke="#7d8590" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input id="searchInput" placeholder="Search repositories..." oninput="debounceSearch(this.value)">
+    <button onclick="clearSearch()" id="clearBtn" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0;display:none">✕</button>
+  </div>
+</nav>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="setSort(this,'stars')">⭐ Most Stars</button>
+  <button class="filter-btn" onclick="setSort(this,'updated')">🕒 Recently Updated</button>
+  <button class="filter-btn" onclick="setSort(this,'forks')">🍴 Most Forks</button>
+  <button class="filter-btn" onclick="setSort(this,'created')">✨ Newest</button>
+</div>
+
+<div class="filter-bar" style="padding-top:0">
+  <button class="filter-btn active" data-lang="" onclick="setLang(this,'')">All Languages</button>
+  <button class="filter-btn" data-lang="JavaScript" onclick="setLang(this,'JavaScript')">🟨 JS</button>
+  <button class="filter-btn" data-lang="TypeScript" onclick="setLang(this,'TypeScript')">🔷 TS</button>
+  <button class="filter-btn" data-lang="Python" onclick="setLang(this,'Python')">🐍 Python</button>
+  <button class="filter-btn" data-lang="Rust" onclick="setLang(this,'Rust')">🦀 Rust</button>
+  <button class="filter-btn" data-lang="Go" onclick="setLang(this,'Go')">🐹 Go</button>
+</div>
+
+<div style="padding:8px 16px;font-size:12px;color:var(--text-muted)" id="resultCount"></div>
+
+<div class="repo-list" id="repoList">
+  <div style="padding:20px;text-align:center"><div class="spinner"></div></div>
+</div>
+
+<div class="load-more" id="loadMore" style="display:none">
+  <button class="btn btn-secondary" id="loadMoreBtn" onclick="loadMore()">Load more</button>
+</div>
+
+<nav class="bottomnav">
+  <a class="nav-item" href="feed.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/></svg><span class="nav-label">Feed</span></a>
+  <a class="nav-item active" href="explore.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span class="nav-label">Explore</span></a>
+  <a class="nav-item" href="new-repo.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="nav-label">New</span></a>
+  <a class="nav-item" href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nav-label">Inbox</span></a>
+  <a class="nav-item" href="profile.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-label">Profile</span></a>
+</nav>
+
+<script src="../js/api.js"></script>
+<script>
+  let currentSort = 'stars', currentLang = '', currentQ = '', currentPage = 1, totalRepos = 0;
+  let debounceTimer;
+
+  // Read URL params
+  const urlQ = new URLSearchParams(location.search).get('q');
+  if (urlQ) { currentQ = urlQ; document.getElementById('searchInput').value = urlQ; }
+
+  function setSort(btn, sort) {
+    document.querySelectorAll('.filter-btn').forEach(b => { if (b.dataset.sort !== undefined || ['⭐','🕒','🍴','✨'].some(x => b.textContent.includes(x))) b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentSort = sort; currentPage = 1;
+    loadRepos(true);
+  }
+
+  function setLang(btn, lang) {
+    document.querySelectorAll('[data-lang]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLang = lang; currentPage = 1;
+    loadRepos(true);
+  }
+
+  function debounceSearch(q) {
+    clearTimeout(debounceTimer);
+    document.getElementById('clearBtn').style.display = q ? 'block' : 'none';
+    debounceTimer = setTimeout(() => { currentQ = q; currentPage = 1; loadRepos(true); }, 400);
+  }
+
+  function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('clearBtn').style.display = 'none';
+    currentQ = ''; currentPage = 1;
+    loadRepos(true);
+  }
+
+  async function loadRepos(reset = false) {
+    const list = document.getElementById('repoList');
+    if (reset) list.innerHTML = '<div style="padding:20px;text-align:center"><div class="spinner"></div></div>';
+
+    try {
+      const params = { sort: currentSort, page: currentPage, limit: 15 };
+      if (currentQ) params.q = currentQ;
+      if (currentLang) params.lang = currentLang;
+
+      const data = await ReposAPI.list(params);
+      totalRepos = data.total;
+
+      document.getElementById('resultCount').textContent =
+        currentQ ? `${data.total} results for "${currentQ}"` : `${data.total} public repositories`;
+
+      if (reset) list.innerHTML = '';
+
+      if (!data.repos.length && reset) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <h3>No repositories found</h3>
+            <p>${currentQ ? `No results for "${currentQ}"` : 'Be the first to create a repository!'}</p>
+            <div style="margin-top:16px"><a class="btn btn-primary" href="new-repo.html">Create Repository</a></div>
+          </div>`;
+        document.getElementById('loadMore').style.display = 'none';
+        return;
+      }
+
+      data.repos.forEach((r, i) => {
+        const card = document.createElement('a');
+        card.href = `repo.html?owner=${r.owner_username}&repo=${r.name}`;
+        card.style.textDecoration = 'none';
+        card.style.animationDelay = `${i * 0.04}s`;
+        card.innerHTML = `
+          <div class="repo-card fade-up">
+            <div class="repo-card-name">
+              <img src="${r.owner_avatar || `https://ui-avatars.com/api/?name=${r.owner_username}&size=24&background=161b22&color=58a6ff`}" style="width:20px;height:20px;border-radius:50%">
+              ${r.owner_username}/${r.name}
+              ${r.is_private ? '<span class="badge badge-gray" style="font-size:10px">Private</span>' : ''}
+            </div>
+            <div class="repo-card-desc">${r.description || 'No description provided.'}</div>
+            <div class="repo-card-stats">
+              ${r.language ? `<span class="repo-stat"><span class="lang-dot" style="background:${langColor(r.language)}"></span>${r.language}</span>` : ''}
+              <span class="repo-stat">⭐ ${formatNumber(r.stars_count)}</span>
+              <span class="repo-stat">🍴 ${formatNumber(r.forks_count)}</span>
+              <span class="repo-stat" style="margin-left:auto;color:var(--text-dim)">${formatDate(r.updated_at)}</span>
+            </div>
+          </div>`;
+        list.appendChild(card);
+      });
+
+      const shown = (currentPage - 1) * 15 + data.repos.length;
+      const loadMore = document.getElementById('loadMore');
+      if (shown < data.total) { loadMore.style.display = 'flex'; document.getElementById('loadMoreBtn').disabled = false; }
+      else loadMore.style.display = 'none';
+
+    } catch(e) {
+      if (reset) list.innerHTML = '<div style="padding:16px;color:var(--red);font-size:13px">⚠️ ' + (e.message || 'Failed to load repositories') + '</div>';
+    }
+  }
+
+  function loadMore() {
+    currentPage++;
+    document.getElementById('loadMoreBtn').disabled = true;
+    document.getElementById('loadMoreBtn').textContent = 'Loading...';
+    loadRepos(false).then(() => { document.getElementById('loadMoreBtn').textContent = 'Load more'; });
+  }
+
+  loadRepos(true);
+</script>
+</body>
+</html>
